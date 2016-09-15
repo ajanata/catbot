@@ -1,54 +1,37 @@
 package com.ajanata.catbot.telegram;
 
-import java.util.Properties;
+import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.TelegramApiException;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.api.objects.User;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.bots.TelegramLongPollingCommandBot;
 
 import com.ajanata.catbot.Bot;
+import com.ajanata.catbot.CatBot;
+import com.ajanata.catbot.handlers.Handler;
 import com.diffplug.common.base.Errors;
 
 
-public class TelegramBot extends TelegramLongPollingBot implements Bot {
+public class TelegramBot extends TelegramLongPollingCommandBot implements Bot {
 
-  private static final Logger LOG = Logger.getLogger(TelegramBot.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TelegramBot.class);
 
-  public static final String TELEGRAM_TOKEN = "telegram.token";
-  public static final String TELEGRAM_NICK = "telegram.nick";
-  public static final String TELEGRAM_USERNAME = "telegram.username";
+  public static final String HACK_BOT_USERNAME_PROPERTY = "telegram.bot.username";
 
-  private final Properties properties;
+  private final CatBot catbot;
   private final TelegramBotsApi api;
+  private final int botId;
 
-  public TelegramBot(final Properties properties) {
-    this.properties = properties;
+  public TelegramBot(final CatBot catbot, final int botId) {
+    this.catbot = catbot;
+    this.botId = botId;
     api = new TelegramBotsApi();
-  }
-
-  @Override
-  public String getShortName() {
-    return "telegram";
-  }
-
-  @Override
-  public Properties getProperties() {
-    return properties;
-  }
-
-  @Override
-  public String getBotUsername() {
-    return getUsername();
-  }
-
-  @Override
-  public String getBotToken() {
-    return getToken();
   }
 
   @Override
@@ -57,14 +40,14 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
   }
 
   @Override
-  public void onUpdateReceived(final Update update) {
+  public void processNonCommandUpdate(final Update update) {
     LOG.trace(String.format("onUpdateReceived(%s)", update));
 
     if (update.hasMessage()) {
       final Message message = update.getMessage();
       if (message.hasText()) {
         final String text = message.getText();
-        if (text.contains(getNickname())) {
+        if (text.contains(catbot.getBotProperty(botId, CatBot.PROP_NICKNAME))) {
           final User author = message.getFrom();
           final String from = author.getUserName();
 
@@ -90,6 +73,12 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
     LOG.info("Logging into Telegram...");
     try {
       api.registerBot(this);
+      
+      for (Entry<String, Handler> entry: catbot.getHandlers().entrySet()) {
+        register(new HandlerCommand(botId, entry.getKey(), entry.getValue()));
+      }
+      register(new HelpCommand(this));
+      
       LOG.info("Logged into Telegram.");
       return true;
     } catch (final TelegramApiException e) {
@@ -101,5 +90,21 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
   @Override
   public void shutdown() {
     LOG.info("Nothing to be done to log out of Telegram.");
+  }
+
+  @Override
+  public String getBotUsername() {
+    // HACK: This is called during the constructor, so we don't have catbot yet.
+    if (null == catbot) {
+      final String username = System.getProperty(HACK_BOT_USERNAME_PROPERTY);
+      System.getProperties().remove(HACK_BOT_USERNAME_PROPERTY);
+      return username;
+    }
+    return catbot.getBotProperty(botId, CatBot.PROP_USERNAME);
+  }
+
+  @Override
+  public String getBotToken() {
+    return catbot.getBotProperty(botId, CatBot.PROP_TOKEN);
   }
 }
