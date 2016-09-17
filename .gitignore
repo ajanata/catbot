@@ -3,3 +3,4 @@ src/main/resources/catbot.properties
 .classpath
 .project
 .settings/
+dependency-reduced-pom.xml
