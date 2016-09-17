@@ -18,6 +18,7 @@ import com.ajanata.catbot.telegram.TelegramBot;
 
 import sx.blah.discord.util.DiscordException;
 
+
 public class CatBot {
   private static final Logger LOG = LoggerFactory.getLogger(CatBot.class);
 
@@ -26,11 +27,11 @@ public class CatBot {
   public static final String PROP_OWNER_ID = "owner.id";
   public static final String PROP_TOKEN = "token";
   public static final String PROP_USERNAME = "username";
-  
+
   public static final String PROP_HANDLERS = "handlers";
   public static final String PROP_HANDLER_TRIGGER = "trigger";
   public static final String PROP_HANDLER_CLASS = "class";
-  
+
   public static final String PROP_BOTS = "bots";
   public static final String PROP_BOT_CLASS = PROP_HANDLER_CLASS;
 
@@ -68,25 +69,27 @@ public class CatBot {
       throw new RuntimeException("No bots configured.");
     }
   }
-  
-  private List<Bot> loadBots(final Properties properties) throws ClassNotFoundException {
-    final int numBots = Integer.valueOf(properties.getProperty(PROP_BOTS, "0"));
+
+  private List<Bot> loadBots(final Properties props) throws ClassNotFoundException {
+    final int numBots = Integer.valueOf(props.getProperty(PROP_BOTS, "0"));
     final List<Bot> list = new ArrayList<>(numBots);
     for (int i = 0; i < numBots; i++) {
-      final String className = properties.getProperty(PROP_BOTS + "." + i + "." + PROP_BOT_CLASS);
+      final String className = props.getProperty(PROP_BOTS + "." + i + "." + PROP_BOT_CLASS);
       @SuppressWarnings("unchecked")
       final Class<? extends Bot> clazz = (Class<? extends Bot>) Class.forName(className);
-      
+
       if (TelegramBot.class.getName().equals(className)) {
         // This dumb shit because the TelegramBot needs to be subclassed so nothing can be used from the constructor...
-        System.setProperty(TelegramBot.HACK_BOT_USERNAME_PROPERTY, getBotProperty(i, PROP_USERNAME));
+        System
+            .setProperty(TelegramBot.HACK_BOT_USERNAME_PROPERTY, getBotProperty(i, PROP_USERNAME));
       }
-      
+
       final Bot bot;
       try {
         final Constructor<? extends Bot> ctor = clazz.getConstructor(CatBot.class, int.class);
         bot = ctor.newInstance(this, i);
-      } catch (final IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException e) {
+      } catch (final IllegalAccessException | InstantiationException | InvocationTargetException
+          | NoSuchMethodException e) {
         final String msg = String.format("Unable to instantiate bot %d, class %s", i, className);
         LOG.error(msg);
         throw new RuntimeException(msg, e);
@@ -96,23 +99,27 @@ public class CatBot {
     return list;
   }
 
-  private Map<String, Handler> loadHandlers(final Properties properties) throws ClassNotFoundException {
-    final int numHandlers = Integer.valueOf(properties.getProperty(PROP_HANDLERS, "0"));
+  private Map<String, Handler> loadHandlers(final Properties props) throws ClassNotFoundException {
+    final int numHandlers = Integer.valueOf(props.getProperty(PROP_HANDLERS, "0"));
     final Map<String, Handler> map = new HashMap<>();
     for (int i = 0; i < numHandlers; i++) {
-      final String trigger = properties.getProperty(PROP_HANDLERS + "." + i + "." + PROP_HANDLER_TRIGGER);
-      final String className = properties.getProperty(PROP_HANDLERS + "." + i + "." + PROP_HANDLER_CLASS);
+      final String trigger = props
+          .getProperty(PROP_HANDLERS + "." + i + "." + PROP_HANDLER_TRIGGER);
+      final String className = props
+          .getProperty(PROP_HANDLERS + "." + i + "." + PROP_HANDLER_CLASS);
       @SuppressWarnings("unchecked")
       final Class<? extends Handler> clazz = (Class<? extends Handler>) Class.forName(className);
 
       Handler handler = null;
       try {
-        final Method factoryMethod = clazz.getMethod(HANDLER_FACTORY_METHOD_NAME, CatBot.class, int.class);
+        final Method factoryMethod = clazz.getMethod(HANDLER_FACTORY_METHOD_NAME, CatBot.class,
+            int.class);
         handler = (Handler) factoryMethod.invoke(null, this, i);
       } catch (final NoSuchMethodException e) {
         // don't care, this method is optional and we'll use the default constructor instead
       } catch (final IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-        final String msg = String.format("Unable to initialize handler %d, class %s, via %s method", i, className,
+        final String msg = String.format(
+            "Unable to initialize handler %d, class %s, via %s method", i, className,
             HANDLER_FACTORY_METHOD_NAME);
         LOG.error(msg, e);
         throw new RuntimeException(msg, e);
@@ -122,7 +129,8 @@ public class CatBot {
         try {
           handler = clazz.newInstance();
         } catch (InstantiationException | IllegalAccessException e) {
-          final String msg = String.format("Unable to initialize handler %d, class %s, via <init> method", i,
+          final String msg = String.format(
+              "Unable to initialize handler %d, class %s, via <init> method", i,
               className);
           LOG.error(msg, e);
           throw new RuntimeException(msg, e);
@@ -136,7 +144,7 @@ public class CatBot {
 
   public void login() {
     LOG.info("Creating bots");
-    for (final Bot bot: bots) {
+    for (final Bot bot : bots) {
       int backoff = 100;
       while (!bot.login()) {
         try {
@@ -158,7 +166,7 @@ public class CatBot {
   }
 
   public void shutdown() {
-    for (final Bot bot: bots) {
+    for (final Bot bot : bots) {
       bot.shutdown();
     }
   }
@@ -166,15 +174,15 @@ public class CatBot {
   public String getProperty(final String key) {
     return properties.getProperty(key);
   }
-  
+
   public String getHandlerProperty(final int handlerId, final String key) {
     return properties.getProperty(PROP_HANDLERS + "." + handlerId + "." + key);
   }
-  
+
   public String getBotProperty(final int botId, final String key) {
     return properties.getProperty(PROP_BOTS + "." + botId + "." + key);
   }
-  
+
   public Map<String, Handler> getHandlers() {
     return handlers;
   }

@@ -2,9 +2,10 @@ package com.ajanata.catbot;
 
 import org.slf4j.Logger;
 
+
 public interface Retryable {
   Logger logger();
-  
+
   default void retry(final Runnable task) {
     int backoff = 500;
     while (true) {

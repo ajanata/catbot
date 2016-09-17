@@ -1,6 +1,5 @@
 package com.ajanata.catbot.discord;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,7 +85,7 @@ public class DiscordBot implements Bot {
       rateLimited();
     }
   }
-  
+
   @EventSubscriber
   public void onMessageReceivedEvent(final MessageReceivedEvent event) {
     final IMessage message = event.getMessage();
@@ -95,17 +94,19 @@ public class DiscordBot implements Bot {
       final IChannel channel = message.getChannel();
       final IUser author = message.getAuthor();
       final String fromName = getUserName(message);
-      LOG.trace(String.format("Message with trigger prefix from %s in %s: %s", fromName, channel.getName(), text));
+      LOG.trace(String.format("Message with trigger prefix from %s in %s: %s", fromName,
+          channel.getName(), text));
 
       final String[] parts = text.split("\\s+");
       if (parts.length > 0) {
         final String trigger = parts[0].substring(1);
         final String[] params = new String[parts.length - 1];
         System.arraycopy(parts, 1, params, 0, params.length);
-        
+
         final Handler handler = catbot.getHandlers().get(trigger);
         if (null != handler) {
-          final String response = handler.handleMessage(botId, fromName, author.getID(), channel.getID(), String.join(" ", params));
+          final String response = handler.handleMessage(botId, fromName, author.getID(),
+              channel.getID(), String.join(" ", params));
           if (null != response) {
             retry(Errors.rethrow().wrap(() -> {
               channel.sendMessage(response);
@@ -136,7 +137,7 @@ public class DiscordBot implements Bot {
       channel.sendMessage("Hey why did you poke me, " + from + "?!");
     }));
   }
-  
+
   private String getUserName(final IMessage message) {
     if (message.getChannel().isPrivate()) {
       return message.getAuthor().getName();

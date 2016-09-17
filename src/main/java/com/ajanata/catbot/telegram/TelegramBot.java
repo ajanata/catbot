@@ -73,12 +73,12 @@ public class TelegramBot extends TelegramLongPollingCommandBot implements Bot {
     LOG.info("Logging into Telegram...");
     try {
       api.registerBot(this);
-      
-      for (Entry<String, Handler> entry: catbot.getHandlers().entrySet()) {
+
+      for (Entry<String, Handler> entry : catbot.getHandlers().entrySet()) {
         register(new HandlerCommand(botId, entry.getKey(), entry.getValue()));
       }
       register(new HelpCommand(this));
-      
+
       LOG.info("Logged into Telegram.");
       return true;
     } catch (final TelegramApiException e) {
