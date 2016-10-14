@@ -3,11 +3,6 @@ package com.ajanata.catbot.discord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ajanata.catbot.Bot;
-import com.ajanata.catbot.CatBot;
-import com.ajanata.catbot.handlers.Handler;
-import com.diffplug.common.base.Errors;
-
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.api.events.EventDispatcher;
@@ -21,6 +16,11 @@ import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.DiscordException;
 import sx.blah.discord.util.RateLimitException;
+
+import com.ajanata.catbot.Bot;
+import com.ajanata.catbot.CatBot;
+import com.ajanata.catbot.handlers.Handler;
+import com.diffplug.common.base.Errors;
 
 
 public class DiscordBot implements Bot {
@@ -47,7 +47,8 @@ public class DiscordBot implements Bot {
     LOG.info("Logging into Discord...");
     try {
       final ClientBuilder clientBuilder = new ClientBuilder();
-      clientBuilder.withToken(catbot.getBotProperty(botId, CatBot.PROP_TOKEN));
+      clientBuilder.withToken(catbot.getBotProperty(botId, CatBot.PROP_TOKEN))
+          .setMaxReconnectAttempts(999);
       client = clientBuilder.login();
       final EventDispatcher dispatcher = client.getDispatcher();
       dispatcher.registerListener(this);

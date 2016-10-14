@@ -1,2 +1,5 @@
 Install the Wolfram Alpha library with this command:
 mvn install:install-file -Dfile=lib/WolframAlpha-1.1.jar -DgroupId=com.wolfram.alpha -DartifactId=WolframAlpha -Dversion=1.1 -Dpackaging=jar
+
+and JMegaHal
+mvn install:install-file -Dfile=lib/JMegaHal.jar -DgroupId=org.jibble.jmegahal -DartifactId=JMegaHal -Dversion=1.0 -Dpackaging=jar

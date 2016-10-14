@@ -43,6 +43,9 @@ handlers.7.trigger=ffnews
 handlers.7.class=com.ajanata.catbot.handlers.GetUserTweetHandler
 handlers.7.twitter.user=FFXIV_NEWS_EN
 
+filters=1
+filters.1.class=com.ajanata.catbot.filters.ChatbotFilter
+
 wolframalpha.api.appid=
 
 twitter.client.key=

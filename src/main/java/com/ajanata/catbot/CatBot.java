@@ -13,10 +13,11 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import sx.blah.discord.util.DiscordException;
+
+import com.ajanata.catbot.filters.Filter;
 import com.ajanata.catbot.handlers.Handler;
 import com.ajanata.catbot.telegram.TelegramBot;
-
-import sx.blah.discord.util.DiscordException;
 
 
 public class CatBot {
@@ -27,6 +28,8 @@ public class CatBot {
   public static final String PROP_OWNER_ID = "owner.id";
   public static final String PROP_TOKEN = "token";
   public static final String PROP_USERNAME = "username";
+
+  public static final String PROP_FILTERS = "filters";
 
   public static final String PROP_HANDLERS = "handlers";
   public static final String PROP_HANDLER_TRIGGER = "trigger";
@@ -142,6 +145,49 @@ public class CatBot {
     return map;
   }
 
+  private Map<String, Filter> loadFilters(final Properties props) throws ClassNotFoundException {
+    final int numHandlers = Integer.valueOf(props.getProperty(PROP_HANDLERS, "0"));
+    final Map<String, Filter> map = new HashMap<>();
+    for (int i = 0; i < numHandlers; i++) {
+      final String trigger = props
+          .getProperty(PROP_HANDLERS + "." + i + "." + PROP_HANDLER_TRIGGER);
+      final String className = props
+          .getProperty(PROP_HANDLERS + "." + i + "." + PROP_HANDLER_CLASS);
+      @SuppressWarnings("unchecked")
+      final Class<? extends Filter> clazz = (Class<? extends Filter>) Class.forName(className);
+
+      Filter filter = null;
+      try {
+        final Method factoryMethod = clazz.getMethod(HANDLER_FACTORY_METHOD_NAME, CatBot.class,
+            int.class);
+        filter = (Filter) factoryMethod.invoke(null, this, i);
+      } catch (final NoSuchMethodException e) {
+        // don't care, this method is optional and we'll use the default constructor instead
+      } catch (final IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+        final String msg = String.format(
+            "Unable to initialize handler %d, class %s, via %s method", i, className,
+            HANDLER_FACTORY_METHOD_NAME);
+        LOG.error(msg, e);
+        throw new RuntimeException(msg, e);
+      }
+
+      if (null == filter) {
+        try {
+          filter = clazz.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+          final String msg = String.format(
+              "Unable to initialize handler %d, class %s, via <init> method", i,
+              className);
+          LOG.error(msg, e);
+          throw new RuntimeException(msg, e);
+        }
+      }
+
+      map.put(trigger, filter);
+    }
+    return map;
+  }
+
   public void login() {
     LOG.info("Creating bots");
     for (final Bot bot : bots) {
@@ -166,6 +212,7 @@ public class CatBot {
   }
 
   public void shutdown() {
+    LOG.info("Shutting down.");
     for (final Bot bot : bots) {
       bot.shutdown();
     }
@@ -177,6 +224,10 @@ public class CatBot {
 
   public String getHandlerProperty(final int handlerId, final String key) {
     return properties.getProperty(PROP_HANDLERS + "." + handlerId + "." + key);
+  }
+
+  public String getFilterProperty(final int filterId, final String key) {
+    return properties.getProperty(PROP_FILTERS + "." + filterId + "." + key);
   }
 
   public String getBotProperty(final int botId, final String key) {
