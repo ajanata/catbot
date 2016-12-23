@@ -15,6 +15,7 @@ import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.DiscordException;
+import sx.blah.discord.util.MissingPermissionsException;
 import sx.blah.discord.util.RateLimitException;
 
 import com.ajanata.catbot.Bot;
@@ -111,7 +112,7 @@ public class DiscordBot implements Bot {
           if (null != response) {
             retry(Errors.rethrow().wrap(() -> {
               channel.sendMessage(response);
-            }));
+            }), MissingPermissionsException.class);
           }
         }
       }
