@@ -4,3 +4,4 @@ src/main/resources/catbot.properties
 .project
 .settings/
 dependency-reduced-pom.xml
+catbot.brain

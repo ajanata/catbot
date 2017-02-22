@@ -3,6 +3,13 @@ package com.ajanata.catbot.discord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ajanata.catbot.Bot;
+import com.ajanata.catbot.CatBot;
+import com.ajanata.catbot.filters.Filter;
+import com.ajanata.catbot.filters.Filter.FilterResult;
+import com.ajanata.catbot.handlers.Handler;
+import com.diffplug.common.base.Errors;
+
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.api.events.EventDispatcher;
@@ -17,11 +24,6 @@ import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.DiscordException;
 import sx.blah.discord.util.MissingPermissionsException;
 import sx.blah.discord.util.RateLimitException;
-
-import com.ajanata.catbot.Bot;
-import com.ajanata.catbot.CatBot;
-import com.ajanata.catbot.handlers.Handler;
-import com.diffplug.common.base.Errors;
 
 
 public class DiscordBot implements Bot {
@@ -92,10 +94,10 @@ public class DiscordBot implements Bot {
   public void onMessageReceivedEvent(final MessageReceivedEvent event) {
     final IMessage message = event.getMessage();
     final String text = message.getContent();
+    final IChannel channel = message.getChannel();
+    final IUser author = message.getAuthor();
+    final String fromName = getUserName(message);
     if (text.startsWith(catbot.getBotProperty(botId, PROP_TRIGGER_PREFIX))) {
-      final IChannel channel = message.getChannel();
-      final IUser author = message.getAuthor();
-      final String fromName = getUserName(message);
       LOG.trace(String.format("Message with trigger prefix from %s in %s: %s", fromName,
           channel.getName(), text));
 
@@ -114,6 +116,17 @@ public class DiscordBot implements Bot {
               channel.sendMessage(response);
             }), MissingPermissionsException.class);
           }
+        }
+      }
+    } else {
+      // check filters
+      for (final Filter filter: catbot.getFilters()) {
+        final FilterResult reply = filter.handleMessage(botId, fromName, author.getID().toString(), channel.getName(), text);
+        if (null != reply) {
+          retry(Errors.rethrow().wrap(() -> {
+            channel.sendMessage(reply.message);
+          }), MissingPermissionsException.class);
+          break;
         }
       }
     }

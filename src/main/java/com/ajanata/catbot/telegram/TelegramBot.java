@@ -14,9 +14,10 @@ import org.telegram.telegrambots.bots.TelegramLongPollingCommandBot;
 
 import com.ajanata.catbot.Bot;
 import com.ajanata.catbot.CatBot;
+import com.ajanata.catbot.filters.Filter;
+import com.ajanata.catbot.filters.Filter.FilterResult;
 import com.ajanata.catbot.handlers.Handler;
 import com.diffplug.common.base.Errors;
-
 
 public class TelegramBot extends TelegramLongPollingCommandBot implements Bot {
 
@@ -47,22 +48,25 @@ public class TelegramBot extends TelegramLongPollingCommandBot implements Bot {
       final Message message = update.getMessage();
       if (message.hasText()) {
         final String text = message.getText();
-        if (text.contains(catbot.getBotProperty(botId, CatBot.PROP_NICKNAME))) {
-          final User author = message.getFrom();
-          final String from = author.getUserName();
+        final User author = message.getFrom();
+        final String from = author.getUserName();
 
-          LOG.trace(String
-              .format("Poked by %s in %s: %s", from, message.getChat().getTitle(), text));
+        // check filters
+        for (final Filter filter: catbot.getFilters()) {
+          final FilterResult reply = filter.handleMessage(botId, from, author.getId().toString(), message.getChat().getTitle(), text);
+          if (null != reply) {
+            final SendMessage send = new SendMessage();
+            send.setChatId(message.getChatId().toString());
+            send.setText(reply.message);
+            if (reply.replyToPrevious) {
+              send.setReplyToMessageId(message.getMessageId());
+            }
 
-          final SendMessage send = new SendMessage();
-          send.setChatId(message.getChatId().toString());
-          send.setText("Hey why did you poke me, @" + from + "?!");
-          send.setReplyToMessageId(message.getMessageId());
-
-          retry(Errors.rethrow().wrap(
-              () -> {
-                sendMessage(send);
-              }));
+            retry(Errors.rethrow().wrap(() -> {
+              sendMessage(send);
+            }));
+            break;
+          }
         }
       }
     }

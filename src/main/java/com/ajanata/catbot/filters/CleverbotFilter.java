@@ -3,31 +3,18 @@ package com.ajanata.catbot.filters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ajanata.catbot.CatBot;
 import com.google.code.chatterbotapi.ChatterBot;
 import com.google.code.chatterbotapi.ChatterBotFactory;
 import com.google.code.chatterbotapi.ChatterBotSession;
 import com.google.code.chatterbotapi.ChatterBotType;
 
 
-public class ChatbotFilter implements Filter {
-  private static final Logger LOG = LoggerFactory.getLogger(ChatbotFilter.class);
+public class CleverbotFilter implements Filter {
+  private static final Logger LOG = LoggerFactory.getLogger(CleverbotFilter.class);
 
-  private final CatBot catbot;
-  private final int filterId;
   private final ChatterBotFactory factory = new ChatterBotFactory();
   private ChatterBot bot;
   private ChatterBotSession session;
-
-  public ChatbotFilter(final CatBot catbot, final int filterId) {
-    this.catbot = catbot;
-    this.filterId = filterId;
-  }
-
-  public static Filter createInstance(final CatBot catbot, final int filterId) {
-    LOG.trace(String.format("createInstance(%d)", filterId));
-    return new ChatbotFilter(catbot, filterId);
-  }
 
   @Override
   public void init() {
@@ -71,12 +58,12 @@ public class ChatbotFilter implements Filter {
   }
 
   @Override
-  public String handleMessage(final int botId, final String fromName, final String fromId,
+  public FilterResult handleMessage(final int botId, final String fromName, final String fromId,
       final String chatId, final String message) {
     // TODO hack
-    if (message.startsWith(".chatbot ")) {
-      final String prompt = message.substring(".chatbot ".length());
-      return think(prompt);
+    if (message.startsWith(".cleverbot ")) {
+      final String prompt = message.substring(".cleverbot ".length());
+      return new FilterResult(think(prompt), true);
     } else {
       return null;
     }

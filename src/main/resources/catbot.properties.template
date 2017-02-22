@@ -10,15 +10,14 @@ bots.1.owner.id=
 bots.1.token=
 bots.1.username=
 
-discord.nickname=
-discord.owner.id=
-discord.token=
-discord.trigger.prefix=
-
-telegram.nickname=
-telegram.owner.id=
-telegram.token=
-telegram.username=
+filters=2
+filters.0.class=com.ajanata.catbot.filters.CleverbotFilter
+filters.1.class=com.ajanata.catbot.filters.HalbotFilter
+filters.1.brain.path=catbot.brain
+filters.1.min.thought.length=10
+filters.1.min.thought.words=3
+filters.1.max.freespeech.interval=100
+filters.1.min.freespeech.interval=25
 
 handlers=8
 handlers.0.trigger=hello
@@ -43,12 +42,9 @@ handlers.7.trigger=ffnews
 handlers.7.class=com.ajanata.catbot.handlers.GetUserTweetHandler
 handlers.7.twitter.user=FFXIV_NEWS_EN
 
-filters=1
-filters.1.class=com.ajanata.catbot.filters.ChatbotFilter
-
-wolframalpha.api.appid=
-
 twitter.client.key=
 twitter.client.secret=
 twitter.user.token=
 twitter.user.secret=
+
+wolframalpha.api.appid=
