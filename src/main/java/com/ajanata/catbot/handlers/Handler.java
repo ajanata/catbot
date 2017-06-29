@@ -8,7 +8,7 @@ public interface Handler {
   // perform initialization.
   void init();
 
-  String handleMessage(int botId, String fromName, String fromId, String chatId, String message);
+  String handleCommand(int botId, String fromName, String fromId, String chatId, String trigger, String message);
 
   String getDescription();
 }

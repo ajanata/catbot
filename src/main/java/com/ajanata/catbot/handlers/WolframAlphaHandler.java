@@ -43,8 +43,8 @@ public class WolframAlphaHandler implements Handler {
   }
 
   @Override
-  public String handleMessage(final int botId, final String fromName, final String fromId,
-      final String chatId, final String message) {
+  public String handleCommand(final int botId, final String fromName, final String fromId,
+      final String chatId, final String trigger, final String message) {
     if (!initialized)
       throw new IllegalStateException("Handler not initialized.");
     LOG.trace(String.format("Querying Wolfram Alpha for %s in %s: %s", fromName, chatId, message));

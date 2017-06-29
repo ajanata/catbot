@@ -24,10 +24,10 @@ import twitter4j.auth.RequestToken;
 
 public class GetUserTweetHandler implements Handler {
   private static final String HANDLER_PROP_TWITTER_USER = "twitter.user";
-  private static final String PROP_TWITTER_CLIENT_KEY = "twitter.client.key";
-  private static final String PROP_TWITTER_CLIENT_SECRET = "twitter.client.secret";
-  private static final String PROP_TWITTER_USER_TOKEN = "twitter.user.token";
-  private static final String PROP_TWITTER_USER_SECRET = "twitter.user.secret";
+  public static final String PROP_TWITTER_CLIENT_KEY = "twitter.client.key";
+  public static final String PROP_TWITTER_CLIENT_SECRET = "twitter.client.secret";
+  public static final String PROP_TWITTER_USER_TOKEN = "twitter.user.token";
+  public static final String PROP_TWITTER_USER_SECRET = "twitter.user.secret";
 
   private static final Logger LOG = LoggerFactory.getLogger(GetUserTweetHandler.class);
 
@@ -37,6 +37,7 @@ public class GetUserTweetHandler implements Handler {
   private final Map<String, Long> newestTweet = new HashMap<>();
 
   private boolean initialized = false;
+  // TODO share instance?
   private Twitter twitter;
   private String twitterUser;
 
@@ -75,8 +76,8 @@ public class GetUserTweetHandler implements Handler {
   }
 
   @Override
-  public String handleMessage(final int botId, final String fromName, final String fromId,
-      final String chatId, final String message) {
+  public String handleCommand(final int botId, final String fromName, final String fromId,
+      final String chatId, final String trigger, final String message) {
     if (!initialized)
       throw new IllegalStateException("Handler not initialized.");
 

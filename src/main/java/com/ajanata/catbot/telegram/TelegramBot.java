@@ -53,7 +53,7 @@ public class TelegramBot extends TelegramLongPollingCommandBot implements Bot {
 
         // check filters
         for (final Filter filter: catbot.getFilters()) {
-          final FilterResult reply = filter.handleMessage(botId, from, author.getId().toString(), message.getChat().getTitle(), text);
+          final FilterResult reply = filter.filterMessage(botId, from, author.getId().toString(), message.getChat().getTitle(), text);
           if (null != reply) {
             final SendMessage send = new SendMessage();
             send.setChatId(message.getChatId().toString());

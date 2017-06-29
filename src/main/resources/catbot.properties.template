@@ -12,14 +12,15 @@ bots.1.username=
 
 filters=2
 filters.0.class=com.ajanata.catbot.filters.CleverbotFilter
-filters.1.class=com.ajanata.catbot.filters.HalbotFilter
+filters.1.class=com.ajanata.catbot.filters.HalbotFilterHandler
 filters.1.brain.path=catbot.brain
 filters.1.min.thought.length=10
 filters.1.min.thought.words=3
 filters.1.max.freespeech.interval=100
 filters.1.min.freespeech.interval=25
+filters.1.retention.chat.count=10
 
-handlers=8
+handlers=10
 handlers.0.trigger=hello
 handlers.0.class=com.ajanata.catbot.handlers.HelloHandler
 handlers.1.trigger=wa
@@ -41,6 +42,10 @@ handlers.6.twitter.user=FF_XIV_EN
 handlers.7.trigger=ffnews
 handlers.7.class=com.ajanata.catbot.handlers.GetUserTweetHandler
 handlers.7.twitter.user=FFXIV_NEWS_EN
+handlers.8.class=com.ajanata.catbot.filters.HalbotFilterHandler
+handlers.8.trigger=brains
+handlers.9.class=com.ajanata.catbot.filters.HalbotFilterHandler
+handlers.9.trigger=tweet
 
 twitter.client.key=
 twitter.client.secret=

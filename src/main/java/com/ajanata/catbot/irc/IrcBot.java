@@ -135,8 +135,8 @@ public class IrcBot extends ListenerAdapter implements Bot {
         final Handler handler = catbot.getHandlers().get(trigger);
         if (null != handler) {
           final String channel = event.getChannel().getName();
-          final String response = handler.handleMessage(botId, fromName, "", channel,
-              String.join(" ", params));
+          final String response = handler.handleCommand(botId, fromName, "", channel,
+              trigger, String.join(" ", params));
           if (null != response) {
             retry(Errors.rethrow().wrap(() -> {
               event.getBot().send().message(channel, response.replace('\n', ' '));

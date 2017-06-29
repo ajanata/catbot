@@ -17,7 +17,7 @@ public interface Filter {
    * @param message
    * @return {@code null} if no response, otherwise message to send as response. The first filter that returns a response causes no further filters to be called.
    */
-  FilterResult handleMessage(int botId, String fromName, String fromId, String chatId, String message);
+  FilterResult filterMessage(int botId, String fromName, String fromId, String chatId, String message);
 
   static class FilterResult {
     public final String message;

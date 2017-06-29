@@ -204,6 +204,7 @@ public class CatBot {
     }
 
     // FIXME do this before connecting the bots?
+    // Filters MUST be done before handlers.
     LOG.info("Initializing filters");
     for (final Filter filter : filters) {
       filter.init();

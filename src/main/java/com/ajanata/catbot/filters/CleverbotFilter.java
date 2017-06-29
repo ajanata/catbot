@@ -58,7 +58,7 @@ public class CleverbotFilter implements Filter {
   }
 
   @Override
-  public FilterResult handleMessage(final int botId, final String fromName, final String fromId,
+  public FilterResult filterMessage(final int botId, final String fromName, final String fromId,
       final String chatId, final String message) {
     // TODO hack
     if (message.startsWith(".cleverbot ")) {

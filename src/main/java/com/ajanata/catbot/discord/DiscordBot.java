@@ -109,8 +109,8 @@ public class DiscordBot implements Bot {
 
         final Handler handler = catbot.getHandlers().get(trigger);
         if (null != handler) {
-          final String response = handler.handleMessage(botId, fromName, author.getID(),
-              channel.getID(), String.join(" ", params));
+          final String response = handler.handleCommand(botId, fromName, author.getID(),
+              channel.getName(), trigger, String.join(" ", params));
           if (null != response) {
             retry(Errors.rethrow().wrap(() -> {
               channel.sendMessage(response);
@@ -121,7 +121,7 @@ public class DiscordBot implements Bot {
     } else {
       // check filters
       for (final Filter filter: catbot.getFilters()) {
-        final FilterResult reply = filter.handleMessage(botId, fromName, author.getID().toString(), channel.getName(), text);
+        final FilterResult reply = filter.filterMessage(botId, fromName, author.getID().toString(), channel.getName(), text);
         if (null != reply) {
           retry(Errors.rethrow().wrap(() -> {
             channel.sendMessage(reply.message);

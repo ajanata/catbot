@@ -35,8 +35,8 @@ public class HandlerCommand extends BotCommand implements Retryable {
     LOG.trace(String.format("%s: execute(%s, %s, %s, %s)", trigger, absSender, user, chat,
         Arrays.asList(arguments)));
 
-    final String response = handler.handleMessage(botId, "@" + user.getUserName(), user.getId()
-        .toString(), chat.getId().toString(), String.join(" ", arguments));
+    final String response = handler.handleCommand(botId, "@" + user.getUserName(), user.getId()
+        .toString(), chat.getTitle(), trigger, String.join(" ", arguments));
     if (null != response) {
       final SendMessage send = new SendMessage();
       send.setChatId(chat.getId().toString());
