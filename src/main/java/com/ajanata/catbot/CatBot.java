@@ -110,7 +110,7 @@ public class CatBot {
       if (TelegramBot.class.getName().equals(className)) {
         // This dumb shit because the TelegramBot needs to be subclassed so nothing can be used from the constructor...
         System
-        .setProperty(TelegramBot.HACK_BOT_USERNAME_PROPERTY, getBotProperty(i, PROP_USERNAME));
+            .setProperty(TelegramBot.HACK_BOT_USERNAME_PROPERTY, getBotProperty(i, PROP_USERNAME));
       }
 
       final Bot bot;
@@ -213,6 +213,17 @@ public class CatBot {
   }
 
   public void login() {
+    // Filters MUST be done before handlers.
+    LOG.info("Initializing filters");
+    for (final Filter filter : filters) {
+      filter.init();
+    }
+
+    LOG.info("Initializing handlers");
+    for (final Handler handler : handlers.values()) {
+      handler.init();
+    }
+
     LOG.info("Creating bots");
     for (final Bot bot : bots) {
       int backoff = 100;
@@ -227,18 +238,6 @@ public class CatBot {
           // pass
         }
       }
-    }
-
-    // FIXME do this before connecting the bots?
-    // Filters MUST be done before handlers.
-    LOG.info("Initializing filters");
-    for (final Filter filter : filters) {
-      filter.init();
-    }
-
-    LOG.info("Initializing handlers");
-    for (final Handler handler : handlers.values()) {
-      handler.init();
     }
   }
 

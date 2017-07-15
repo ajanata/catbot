@@ -74,7 +74,7 @@ public class DiscordBot implements Bot {
     try {
       final ClientBuilder clientBuilder = new ClientBuilder();
       clientBuilder.withToken(catbot.getBotProperty(botId, CatBot.PROP_TOKEN))
-      .setMaxReconnectAttempts(999);
+          .setMaxReconnectAttempts(999);
       client = clientBuilder.login();
       final EventDispatcher dispatcher = client.getDispatcher();
       dispatcher.registerListener(this);
