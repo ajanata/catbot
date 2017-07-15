@@ -1,4 +1,4 @@
-bots=2
+bots=3
 bots.0.class=com.ajanata.catbot.discord.DiscordBot
 bots.0.nickname=
 bots.0.owner.id=
@@ -9,6 +9,15 @@ bots.1.nickname=
 bots.1.owner.id=
 bots.1.token=
 bots.1.username=
+bots.2.class=com.ajanata.catbot.irc.IrcBot
+bots.2.nickname=CatBot
+bots.2.trigger.prefix=.
+bots.2.server=
+bots.2.port=
+bots.2.realname=
+bots.2.user.modes=+B
+bots.2.channels=1
+bots.2.channels.0=#catbot
 
 filters=2
 filters.0.class=com.ajanata.catbot.filters.CleverbotFilter
