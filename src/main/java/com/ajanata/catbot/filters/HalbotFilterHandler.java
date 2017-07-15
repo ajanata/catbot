@@ -65,7 +65,8 @@ public class HalbotFilterHandler implements Filter, Handler {
   private int minFreespeechInterval;
   private int brainSize = 0;
   private boolean ready = false;
-  private int messagesSinceLastTalk = 0;
+  private final Map<String, Integer> messagesSinceLastTalkPerChat = Collections
+      .synchronizedMap(new HashMap<>());
   private int retainPerChatCount = 0;
   private final Map<String, LinkedList<String>> retainPerChat = Collections
       .synchronizedMap(new HashMap<>());
@@ -141,13 +142,11 @@ public class HalbotFilterHandler implements Filter, Handler {
 
   private String think(final String thought) {
     LOG.trace(String.format("think(%s)", thought));
-    messagesSinceLastTalk = 0;
-    return halbot.getSentence(thought);
+    return halbot.getSentence(thought, "catbot", "http");
   }
 
   private String think() {
     LOG.trace("think()");
-    messagesSinceLastTalk = 0;
     return halbot.getSentence();
   }
 
@@ -214,25 +213,40 @@ public class HalbotFilterHandler implements Filter, Handler {
       // error writing to brain file, report that instead of thinking
       return new FilterResult("<error> Unable to learn previous message.", false);
     }
-    // TODO more
+    // TODO more?
     if (message.toLowerCase(Locale.ENGLISH).contains(
         catbot.getBotProperty(botId, CatBot.PROP_NICKNAME).toLowerCase(Locale.ENGLISH))) {
-      final String thought = think(message);
-      retain(chatId, thought);
-      return new FilterResult(thought, true);
+      return saySomethingPrompted(chatId, message);
     }
 
-    messagesSinceLastTalk++;
+    final Integer sinceLastObj = messagesSinceLastTalkPerChat.get(chatId);
+    int messagesSinceLastTalk = 0;
+    if (null != sinceLastObj) {
+      messagesSinceLastTalk = sinceLastObj;
+    }
+    messagesSinceLastTalkPerChat.put(chatId, ++messagesSinceLastTalk);
     if (messagesSinceLastTalk > minFreespeechInterval
         && messagesSinceLastTalk - minFreespeechInterval >= random.nextInt(maxFreespeechInterval
             - minFreespeechInterval)) {
-      LOG.debug(String
-          .format("Randomly saying something after %d lines", messagesSinceLastTalk - 1));
-      final String thought = think();
-      retain(chatId, thought);
-      return new FilterResult(thought, false);
+      LOG.debug(String.format("Randomly saying something in [%s] after %d lines", chatId,
+          messagesSinceLastTalk - 1));
+      return saySomethingRandom(chatId);
     }
     return null;
+  }
+
+  private FilterResult saySomethingPrompted(final String chatId, final String message) {
+    messagesSinceLastTalkPerChat.put(chatId, 0);
+    final String thought = think(message);
+    retain(chatId, thought);
+    return new FilterResult(thought, true);
+  }
+
+  private FilterResult saySomethingRandom(final String chatId) {
+    messagesSinceLastTalkPerChat.put(chatId, 0);
+    final String thought = think();
+    retain(chatId, thought);
+    return new FilterResult(thought, false);
   }
 
   @Override
@@ -242,37 +256,42 @@ public class HalbotFilterHandler implements Filter, Handler {
       case "brains":
         return "Brain size: " + brainSize;
       case "tweet":
-        final int index;
-        if (message.trim().isEmpty()) {
-          index = 0;
-        } else {
-          try {
-            index = Integer.parseInt(message) - 1;
-          } catch (final NumberFormatException e) {
-            return "Invalid tweet reference number.";
-          }
-        }
-        final String thought = retrieve(chatId, index);
-        if (null == thought) {
-          return "Invalid tweet reference number.";
-        }
-        // avoid tagging people
-        thought.replaceAll("@", "");
-        // TODO remove links?
-        if (thought.length() > TWEET_MAX_LENGTH) {
-          return "Tweet? Twit? Twot? Nope, too long.";
-        }
-        try {
-          twitter.updateStatus(thought);
-          return "Tweeted: " + thought;
-        } catch (final TwitterException e) {
-          LOG.error(String.format("Unable to tweet [%s]", thought), e);
-          return "Unable to tweet: " + e.getMessage();
-        }
+        return tweetPreviousThought(chatId, message);
     }
     return null;
   }
 
+  private String tweetPreviousThought(final String chatId, final String message) {
+    final int index;
+    if (message.trim().isEmpty()) {
+      index = 0;
+    } else {
+      try {
+        index = Integer.parseInt(message) - 1;
+      } catch (final NumberFormatException e) {
+        return "Invalid tweet reference number.";
+      }
+    }
+    String thought = retrieve(chatId, index);
+    if (null == thought) {
+      return "Invalid tweet reference number.";
+    }
+    // avoid tagging people
+    thought = thought.replaceAll("@", "");
+    // TODO remove links?
+    if (thought.length() > TWEET_MAX_LENGTH) {
+      return "Tweet? Twit? Twot? Nope, too long.";
+    }
+    try {
+      twitter.updateStatus(thought);
+      return "Tweeted: " + thought;
+    } catch (final TwitterException e) {
+      LOG.error(String.format("Unable to tweet [%s]", thought), e);
+      return "Unable to tweet: " + e.getMessage();
+    }
+  }
+
+  // This doesn't work right with multiple commands in the same handler...
   @Override
   public String getDescription() {
     return "Retrieve how many lines are in the brain file.";

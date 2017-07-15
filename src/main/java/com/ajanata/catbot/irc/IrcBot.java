@@ -41,6 +41,8 @@ import org.slf4j.LoggerFactory;
 
 import com.ajanata.catbot.Bot;
 import com.ajanata.catbot.CatBot;
+import com.ajanata.catbot.filters.Filter;
+import com.ajanata.catbot.filters.Filter.FilterResult;
 import com.ajanata.catbot.handlers.Handler;
 import com.diffplug.common.base.Errors;
 
@@ -91,17 +93,17 @@ public class IrcBot extends ListenerAdapter implements Bot {
     channels = Collections.unmodifiableSet(chans);
 
     final Configuration config = new Configuration.Builder()
-    .setName(nickname)
-    .addServer(server, port)
-    .setRealName(realname)
-    .setLogin(nickname)
-    .setVersion("CatBot")
-    .setAutoReconnect(true)
-    .setAutoReconnectDelay((int) TimeUnit.SECONDS.toMillis(5))
-    .setAutoReconnectAttempts(100)
-    .addAutoJoinChannels(channels)
-    .addListener(this)
-    .buildConfiguration();
+        .setName(nickname)
+        .addServer(server, port)
+        .setRealName(realname)
+        .setLogin(nickname)
+        .setVersion("CatBot")
+        .setAutoReconnect(true)
+        .setAutoReconnectDelay((int) TimeUnit.SECONDS.toMillis(5))
+        .setAutoReconnectAttempts(100)
+        .addAutoJoinChannels(channels)
+        .addListener(this)
+        .buildConfiguration();
 
     irc = new PircBotX(config);
     ircThread = new Thread(() -> {
@@ -141,11 +143,13 @@ public class IrcBot extends ListenerAdapter implements Bot {
     LOG.info("Disconnected from IRC.");
   }
 
+  // NOTE: this does not do private messages (onPrivateMessage)
   @Override
   public void onMessage(final MessageEvent event) throws Exception {
     final String text = event.getMessage();
+    final String channel = event.getChannel().getName();
+    final String fromName = event.getUser().getNick();
     if (text.startsWith(catbot.getBotProperty(botId, PROP_TRIGGER_PREFIX))) {
-      final String fromName = event.getUser().getNick();
       LOG.trace(String.format("Message with trigger prefix from %s to %s: %s", fromName,
           event.getChannelSource(), text));
 
@@ -157,14 +161,30 @@ public class IrcBot extends ListenerAdapter implements Bot {
 
         final Handler handler = catbot.getHandlers().get(trigger);
         if (null != handler) {
-          final String channel = event.getChannel().getName();
-          final String response = handler.handleCommand(botId, fromName, "", channel,
+          final String response = handler.handleCommand(botId, fromName, fromName, channel,
               trigger, String.join(" ", params));
           if (null != response) {
             retry(Errors.rethrow().wrap(() -> {
               event.getBot().send().message(channel, response.replace('\n', ' '));
             }));
           }
+        }
+      }
+    } else {
+      for (final Filter filter : catbot.getFilters()) {
+        final FilterResult reply = filter.filterMessage(botId, fromName, fromName, channel,
+            text);
+        if (null != reply) {
+          final String replyText;
+          if (reply.replyToPrevious) {
+            replyText = fromName + ": " + reply.message;
+          } else {
+            replyText = reply.message;
+          }
+          retry(Errors.rethrow().wrap(() -> {
+            event.getBot().send().message(channel, replyText.replace('\n', ' '));
+          }));
+          break;
         }
       }
     }
