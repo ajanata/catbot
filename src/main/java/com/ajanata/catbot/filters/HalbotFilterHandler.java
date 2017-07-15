@@ -1,3 +1,26 @@
+/**
+ * Copyright (c) 2016-2017, Andy Janata
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this list of conditions
+ *   and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright notice, this list of
+ *   conditions and the following disclaimer in the documentation and/or other materials provided
+ *   with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 package com.ajanata.catbot.filters;
 
 import java.io.BufferedReader;
@@ -15,15 +38,16 @@ import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.TwitterFactory;
+import twitter4j.auth.AccessToken;
+
 import com.ajanata.catbot.CatBot;
 import com.ajanata.catbot.halbot.Halbot;
 import com.ajanata.catbot.handlers.GetUserTweetHandler;
 import com.ajanata.catbot.handlers.Handler;
 
-import twitter4j.Twitter;
-import twitter4j.TwitterException;
-import twitter4j.TwitterFactory;
-import twitter4j.auth.AccessToken;
 
 // Singleton
 public class HalbotFilterHandler implements Filter, Handler {
@@ -43,7 +67,8 @@ public class HalbotFilterHandler implements Filter, Handler {
   private boolean ready = false;
   private int messagesSinceLastTalk = 0;
   private int retainPerChatCount = 0;
-  private final Map<String, LinkedList<String>> retainPerChat = Collections.synchronizedMap(new HashMap<>());
+  private final Map<String, LinkedList<String>> retainPerChat = Collections
+      .synchronizedMap(new HashMap<>());
   // TODO share instance?
   private Twitter twitter;
 
@@ -69,7 +94,9 @@ public class HalbotFilterHandler implements Filter, Handler {
   @Override
   public synchronized void init() {
     // only do this once, we get called for the filter and for each handler
-    if (ready) return;
+    if (ready) {
+      return;
+    }
     // TODO move this to Halbot
     final String brainPath = catbot.getFilterProperty(filterId, "brain.path");
     try (final BufferedReader reader = new BufferedReader(new FileReader(brainPath))) {
@@ -92,9 +119,12 @@ public class HalbotFilterHandler implements Filter, Handler {
     }
     minThoughtLength = Integer.parseInt(catbot.getFilterProperty(filterId, "min.thought.length"));
     minThoughtWords = Integer.parseInt(catbot.getFilterProperty(filterId, "min.thought.words"));
-    maxFreespeechInterval = Integer.parseInt(catbot.getFilterProperty(filterId, "max.freespeech.interval"));
-    minFreespeechInterval = Integer.parseInt(catbot.getFilterProperty(filterId, "min.freespeech.interval"));
-    retainPerChatCount = Integer.parseInt(catbot.getFilterProperty(filterId, "retention.chat.count"));
+    maxFreespeechInterval = Integer.parseInt(catbot.getFilterProperty(filterId,
+        "max.freespeech.interval"));
+    minFreespeechInterval = Integer.parseInt(catbot.getFilterProperty(filterId,
+        "min.freespeech.interval"));
+    retainPerChatCount = Integer.parseInt(catbot
+        .getFilterProperty(filterId, "retention.chat.count"));
 
     twitter = new TwitterFactory().getInstance();
 
@@ -123,7 +153,8 @@ public class HalbotFilterHandler implements Filter, Handler {
 
   private synchronized boolean learn(final String thought) {
     LOG.trace(String.format("learn(%s)", thought));
-    if (null != brainWriter && thought.length() >= minThoughtLength && thought.split("\\s+").length >= minThoughtWords) {
+    if (null != brainWriter && thought.length() >= minThoughtLength
+        && thought.split("\\s+").length >= minThoughtWords) {
       try {
         halbot.train(thought);
         brainWriter.append(thought);
@@ -158,7 +189,7 @@ public class HalbotFilterHandler implements Filter, Handler {
 
   private String retrieve(final String chatId, final int index) {
     synchronized (retainPerChat) {
-      LinkedList<String> thoughts = retainPerChat.get(chatId);
+      final LinkedList<String> thoughts = retainPerChat.get(chatId);
       if (null == thoughts) {
         LOG.trace(String.format("No remembered thoughts for chat %s", chatId));
         return null;
@@ -184,7 +215,8 @@ public class HalbotFilterHandler implements Filter, Handler {
       return new FilterResult("<error> Unable to learn previous message.", false);
     }
     // TODO more
-    if (message.toLowerCase(Locale.ENGLISH).contains(catbot.getBotProperty(botId, CatBot.PROP_NICKNAME).toLowerCase(Locale.ENGLISH))) {
+    if (message.toLowerCase(Locale.ENGLISH).contains(
+        catbot.getBotProperty(botId, CatBot.PROP_NICKNAME).toLowerCase(Locale.ENGLISH))) {
       final String thought = think(message);
       retain(chatId, thought);
       return new FilterResult(thought, true);
@@ -192,8 +224,10 @@ public class HalbotFilterHandler implements Filter, Handler {
 
     messagesSinceLastTalk++;
     if (messagesSinceLastTalk > minFreespeechInterval
-        && messagesSinceLastTalk - minFreespeechInterval >= random.nextInt(maxFreespeechInterval - minFreespeechInterval)) {
-      LOG.debug(String.format("Randomly saying something after %d lines", messagesSinceLastTalk - 1));
+        && messagesSinceLastTalk - minFreespeechInterval >= random.nextInt(maxFreespeechInterval
+            - minFreespeechInterval)) {
+      LOG.debug(String
+          .format("Randomly saying something after %d lines", messagesSinceLastTalk - 1));
       final String thought = think();
       retain(chatId, thought);
       return new FilterResult(thought, false);
@@ -202,7 +236,8 @@ public class HalbotFilterHandler implements Filter, Handler {
   }
 
   @Override
-  public String handleCommand(final int botId, final String fromName, final String fromId, final String chatId, final String trigger, final String message) {
+  public String handleCommand(final int botId, final String fromName, final String fromId,
+      final String chatId, final String trigger, final String message) {
     switch (trigger) {
       case "brains":
         return "Brain size: " + brainSize;

@@ -1,14 +1,30 @@
+/**
+ * Copyright (c) 2016-2017, Andy Janata
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this list of conditions
+ *   and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright notice, this list of
+ *   conditions and the following disclaimer in the documentation and/or other materials provided
+ *   with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 package com.ajanata.catbot.discord;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.ajanata.catbot.Bot;
-import com.ajanata.catbot.CatBot;
-import com.ajanata.catbot.filters.Filter;
-import com.ajanata.catbot.filters.Filter.FilterResult;
-import com.ajanata.catbot.handlers.Handler;
-import com.diffplug.common.base.Errors;
 
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
@@ -24,6 +40,13 @@ import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.DiscordException;
 import sx.blah.discord.util.MissingPermissionsException;
 import sx.blah.discord.util.RateLimitException;
+
+import com.ajanata.catbot.Bot;
+import com.ajanata.catbot.CatBot;
+import com.ajanata.catbot.filters.Filter;
+import com.ajanata.catbot.filters.Filter.FilterResult;
+import com.ajanata.catbot.handlers.Handler;
+import com.diffplug.common.base.Errors;
 
 
 public class DiscordBot implements Bot {
@@ -51,7 +74,7 @@ public class DiscordBot implements Bot {
     try {
       final ClientBuilder clientBuilder = new ClientBuilder();
       clientBuilder.withToken(catbot.getBotProperty(botId, CatBot.PROP_TOKEN))
-          .setMaxReconnectAttempts(999);
+      .setMaxReconnectAttempts(999);
       client = clientBuilder.login();
       final EventDispatcher dispatcher = client.getDispatcher();
       dispatcher.registerListener(this);
@@ -120,8 +143,9 @@ public class DiscordBot implements Bot {
       }
     } else {
       // check filters
-      for (final Filter filter: catbot.getFilters()) {
-        final FilterResult reply = filter.filterMessage(botId, fromName, author.getID().toString(), channel.getName(), text);
+      for (final Filter filter : catbot.getFilters()) {
+        final FilterResult reply = filter.filterMessage(botId, fromName, author.getID().toString(),
+            channel.getName(), text);
         if (null != reply) {
           retry(Errors.rethrow().wrap(() -> {
             channel.sendMessage(reply.message);

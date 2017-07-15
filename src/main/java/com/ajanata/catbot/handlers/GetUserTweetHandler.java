@@ -1,3 +1,26 @@
+/**
+ * Copyright (c) 2016-2017, Andy Janata
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this list of conditions
+ *   and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright notice, this list of
+ *   conditions and the following disclaimer in the documentation and/or other materials provided
+ *   with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 package com.ajanata.catbot.handlers;
 
 import java.io.BufferedReader;
@@ -10,8 +33,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ajanata.catbot.CatBot;
-
 import twitter4j.Paging;
 import twitter4j.ResponseList;
 import twitter4j.Status;
@@ -20,6 +41,8 @@ import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
+
+import com.ajanata.catbot.CatBot;
 
 
 public class GetUserTweetHandler implements Handler {
@@ -53,8 +76,9 @@ public class GetUserTweetHandler implements Handler {
 
   @Override
   public void init() {
-    if (initialized)
+    if (initialized) {
       return;
+    }
 
     twitter = new TwitterFactory().getInstance();
 
@@ -78,8 +102,9 @@ public class GetUserTweetHandler implements Handler {
   @Override
   public String handleCommand(final int botId, final String fromName, final String fromId,
       final String chatId, final String trigger, final String message) {
-    if (!initialized)
+    if (!initialized) {
       throw new IllegalStateException("Handler not initialized.");
+    }
 
     if (fromId.equals(catbot.getBotProperty(botId, CatBot.PROP_OWNER_ID))
         && "force".equals(message)) {
@@ -146,25 +171,25 @@ public class GetUserTweetHandler implements Handler {
     return String.format("Shows the most recent tweet from %s.", twitterUser);
   }
 
-  public static void main(String args[]) throws Exception {
+  public static void main(final String args[]) throws Exception {
     // The factory instance is re-useable and thread safe.
-    Twitter twitter = TwitterFactory.getSingleton();
+    final Twitter twitter = TwitterFactory.getSingleton();
     twitter.setOAuthConsumer("key", "secret");
-    RequestToken requestToken = twitter.getOAuthRequestToken();
+    final RequestToken requestToken = twitter.getOAuthRequestToken();
     AccessToken accessToken = null;
-    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
     while (null == accessToken) {
       System.out.println("Open the following URL and grant access to your account:");
       System.out.println(requestToken.getAuthorizationURL());
       System.out.print("Enter the PIN(if aviailable) or just hit enter.[PIN]:");
-      String pin = br.readLine();
+      final String pin = br.readLine();
       try {
         if (pin.length() > 0) {
           accessToken = twitter.getOAuthAccessToken(requestToken, pin);
         } else {
           accessToken = twitter.getOAuthAccessToken();
         }
-      } catch (TwitterException te) {
+      } catch (final TwitterException te) {
         if (401 == te.getStatusCode()) {
           System.out.println("Unable to get the access token.");
         } else {
@@ -175,7 +200,7 @@ public class GetUserTweetHandler implements Handler {
     //persist to the accessToken for future reference.
     System.out.println("token:" + accessToken.getToken());
     System.out.println("token secret:" + accessToken.getTokenSecret());
-    Status status = twitter.updateStatus("Mew!");
+    final Status status = twitter.updateStatus("Mew!");
     System.out.println("Successfully updated the status to [" + status.getText() + "].");
     System.exit(0);
   }
