@@ -23,10 +23,12 @@ filters=2
 filters.0.class=com.ajanata.catbot.filters.CleverbotFilter
 filters.1.class=com.ajanata.catbot.filters.HalbotFilterHandler
 filters.1.brain.path=catbot.brain
-filters.1.min.thought.length=10
-filters.1.min.thought.words=3
-filters.1.max.freespeech.interval=100
-filters.1.min.freespeech.interval=25
+filters.1.thought.min.length=10
+filters.1.thought.min.words=3
+filters.1.freespeech.max.interval=100
+filters.1.freespeech.min.interval=25
+filters.1.freespeech.blacklist=0
+#filters.1.freespeech.blacklist.1=chat-id
 filters.1.retention.chat.count=10
 
 handlers=11

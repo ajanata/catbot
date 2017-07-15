@@ -30,10 +30,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,6 +65,7 @@ public class HalbotFilterHandler implements Filter, Handler {
   private int minThoughtWords;
   private int maxFreespeechInterval;
   private int minFreespeechInterval;
+  private final Set<String> freespeechBlacklist = Collections.synchronizedSet(new HashSet<>());
   private int brainSize = 0;
   private boolean ready = false;
   private final Map<String, Integer> messagesSinceLastTalkPerChat = Collections
@@ -118,14 +121,19 @@ public class HalbotFilterHandler implements Filter, Handler {
     } catch (final IOException e) {
       LOG.error(String.format("Unable to open file [%s] for brain writing", brainPath), e);
     }
-    minThoughtLength = Integer.parseInt(catbot.getFilterProperty(filterId, "min.thought.length"));
-    minThoughtWords = Integer.parseInt(catbot.getFilterProperty(filterId, "min.thought.words"));
+    minThoughtLength = Integer.parseInt(catbot.getFilterProperty(filterId, "thought.min.length"));
+    minThoughtWords = Integer.parseInt(catbot.getFilterProperty(filterId, "thought.min.words"));
     maxFreespeechInterval = Integer.parseInt(catbot.getFilterProperty(filterId,
-        "max.freespeech.interval"));
+        "freespeech.max.interval"));
     minFreespeechInterval = Integer.parseInt(catbot.getFilterProperty(filterId,
-        "min.freespeech.interval"));
+        "freespeech.min.interval"));
     retainPerChatCount = Integer.parseInt(catbot
         .getFilterProperty(filterId, "retention.chat.count"));
+
+    for (int i = 0; i < Integer
+        .parseInt(catbot.getFilterProperty(filterId, "freespeech.blacklist")); i++) {
+      freespeechBlacklist.add(catbot.getFilterProperty(filterId, "freespeech.blacklist." + i));
+    }
 
     twitter = new TwitterFactory().getInstance();
 
@@ -225,7 +233,7 @@ public class HalbotFilterHandler implements Filter, Handler {
       messagesSinceLastTalk = sinceLastObj;
     }
     messagesSinceLastTalkPerChat.put(chatId, ++messagesSinceLastTalk);
-    if (messagesSinceLastTalk > minFreespeechInterval
+    if (!freespeechBlacklist.contains(chatId) && messagesSinceLastTalk > minFreespeechInterval
         && messagesSinceLastTalk - minFreespeechInterval >= random.nextInt(maxFreespeechInterval
             - minFreespeechInterval)) {
       LOG.debug(String.format("Randomly saying something in [%s] after %d lines", chatId,
