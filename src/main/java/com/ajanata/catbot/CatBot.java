@@ -35,12 +35,12 @@ import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import sx.blah.discord.util.DiscordException;
+import org.telegram.telegrambots.ApiContextInitializer;
 
 import com.ajanata.catbot.filters.Filter;
 import com.ajanata.catbot.handlers.Handler;
-import com.ajanata.catbot.telegram.TelegramBot;
+
+import sx.blah.discord.util.DiscordException;
 
 
 public class CatBot {
@@ -70,6 +70,9 @@ public class CatBot {
   private final Properties properties;
 
   public static void main(final String[] args) throws Exception {
+    // TODO try to find a better place for this... doesn't work in TelegramBot constructor
+    ApiContextInitializer.init();
+
     final Properties properties = new Properties();
     properties.load(CatBot.class.getResourceAsStream("/catbot.properties"));
     final CatBot catbot = new CatBot(properties);
@@ -107,12 +110,6 @@ public class CatBot {
       @SuppressWarnings("unchecked")
       final Class<? extends Bot> clazz = (Class<? extends Bot>) Class.forName(className);
 
-      if (TelegramBot.class.getName().equals(className)) {
-        // This dumb shit because the TelegramBot needs to be subclassed so nothing can be used from the constructor...
-        System
-            .setProperty(TelegramBot.HACK_BOT_USERNAME_PROPERTY, getBotProperty(i, PROP_USERNAME));
-      }
-
       final Bot bot;
       try {
         final Constructor<? extends Bot> ctor = clazz.getConstructor(CatBot.class, int.class);
@@ -144,7 +141,8 @@ public class CatBot {
         filter = (Filter) factoryMethod.invoke(null, this, i);
       } catch (final NoSuchMethodException e) {
         // don't care, this method is optional and we'll use the default constructor instead
-      } catch (final IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+      } catch (final IllegalAccessException | IllegalArgumentException
+          | InvocationTargetException e) {
         final String msg = String.format(
             "Unable to initialize handler %d, class %s, via %s method", i, className,
             FACTORY_METHOD_NAME);
@@ -187,7 +185,8 @@ public class CatBot {
         handler = (Handler) factoryMethod.invoke(null, this, i);
       } catch (final NoSuchMethodException e) {
         // don't care, this method is optional and we'll use the default constructor instead
-      } catch (final IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+      } catch (final IllegalAccessException | IllegalArgumentException
+          | InvocationTargetException e) {
         final String msg = String.format(
             "Unable to initialize handler %d, class %s, via %s method", i, className,
             FACTORY_METHOD_NAME);

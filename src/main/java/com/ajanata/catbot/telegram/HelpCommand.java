@@ -29,13 +29,13 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.telegram.telegrambots.TelegramApiException;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Chat;
 import org.telegram.telegrambots.api.objects.User;
 import org.telegram.telegrambots.bots.AbsSender;
-import org.telegram.telegrambots.bots.commands.BotCommand;
-import org.telegram.telegrambots.bots.commands.ICommandRegistry;
+import org.telegram.telegrambots.bots.commandbot.commands.BotCommand;
+import org.telegram.telegrambots.bots.commandbot.commands.ICommandRegistry;
+import org.telegram.telegrambots.exceptions.TelegramApiException;
 
 
 public class HelpCommand extends BotCommand {
@@ -73,7 +73,7 @@ public class HelpCommand extends BotCommand {
     helpMessage.setText(helpMessageBuilder.toString());
 
     try {
-      absSender.sendMessage(helpMessage);
+      absSender.execute(helpMessage);
     } catch (final TelegramApiException e) {
       LOG.error("Unable to send help message to " + user.getUserName(), e);
     }

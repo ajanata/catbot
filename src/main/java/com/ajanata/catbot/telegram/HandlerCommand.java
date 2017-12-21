@@ -31,7 +31,7 @@ import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Chat;
 import org.telegram.telegrambots.api.objects.User;
 import org.telegram.telegrambots.bots.AbsSender;
-import org.telegram.telegrambots.bots.commands.BotCommand;
+import org.telegram.telegrambots.bots.commandbot.commands.BotCommand;
 
 import com.ajanata.catbot.Retryable;
 import com.ajanata.catbot.handlers.Handler;
@@ -67,7 +67,7 @@ public class HandlerCommand extends BotCommand implements Retryable {
       send.setText(response);
       retry(Errors.rethrow().wrap(
           () -> {
-            absSender.sendMessage(send);
+            absSender.execute(send);
           }));
     }
   }

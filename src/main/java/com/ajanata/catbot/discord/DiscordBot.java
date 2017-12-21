@@ -26,13 +26,20 @@ package com.ajanata.catbot.discord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ajanata.catbot.Bot;
+import com.ajanata.catbot.CatBot;
+import com.ajanata.catbot.filters.Filter;
+import com.ajanata.catbot.filters.Filter.FilterResult;
+import com.ajanata.catbot.handlers.Handler;
+import com.diffplug.common.base.Errors;
+
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.api.events.EventDispatcher;
 import sx.blah.discord.api.events.EventSubscriber;
-import sx.blah.discord.handle.impl.events.MentionEvent;
-import sx.blah.discord.handle.impl.events.MessageReceivedEvent;
 import sx.blah.discord.handle.impl.events.ReadyEvent;
+import sx.blah.discord.handle.impl.events.guild.channel.message.MentionEvent;
+import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IMessage;
@@ -40,13 +47,6 @@ import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.DiscordException;
 import sx.blah.discord.util.MissingPermissionsException;
 import sx.blah.discord.util.RateLimitException;
-
-import com.ajanata.catbot.Bot;
-import com.ajanata.catbot.CatBot;
-import com.ajanata.catbot.filters.Filter;
-import com.ajanata.catbot.filters.Filter.FilterResult;
-import com.ajanata.catbot.handlers.Handler;
-import com.diffplug.common.base.Errors;
 
 
 public class DiscordBot implements Bot {
@@ -132,8 +132,9 @@ public class DiscordBot implements Bot {
 
         final Handler handler = catbot.getHandlers().get(trigger);
         if (null != handler) {
-          final String response = handler.handleCommand(botId, fromName, author.getID(),
-              channel.getName(), trigger, String.join(" ", params));
+          final String response = handler.handleCommand(botId, fromName,
+              String.valueOf(author.getLongID()), channel.getName(), trigger,
+              String.join(" ", params));
           if (null != response) {
             retry(Errors.rethrow().wrap(() -> {
               channel.sendMessage(response);
@@ -144,8 +145,8 @@ public class DiscordBot implements Bot {
     } else {
       // check filters
       for (final Filter filter : catbot.getFilters()) {
-        final FilterResult reply = filter.filterMessage(botId, fromName, author.getID().toString(),
-            channel.getName(), text);
+        final FilterResult reply = filter.filterMessage(botId, fromName,
+            String.valueOf(author.getLongID()), channel.getName(), text);
         if (null != reply) {
           retry(Errors.rethrow().wrap(() -> {
             channel.sendMessage(reply.message);
@@ -169,7 +170,7 @@ public class DiscordBot implements Bot {
     }
     final IUser author = message.getAuthor();
     final String from = getUserName(message);
-    LOG.trace(String.format("onMentionEvent from %s (%s) in %s: %s", from, author.getID(),
+    LOG.trace(String.format("onMentionEvent from %s (%s) in %s: %s", from, author.getLongID(),
         chatName, message.getContent()));
 
     retry(Errors.rethrow().wrap(() -> {

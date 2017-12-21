@@ -27,13 +27,13 @@ import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.telegram.telegrambots.TelegramApiException;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.api.objects.User;
-import org.telegram.telegrambots.bots.TelegramLongPollingCommandBot;
+import org.telegram.telegrambots.bots.commandbot.TelegramLongPollingCommandBot;
+import org.telegram.telegrambots.exceptions.TelegramApiException;
 
 import com.ajanata.catbot.Bot;
 import com.ajanata.catbot.CatBot;
@@ -47,13 +47,12 @@ public class TelegramBot extends TelegramLongPollingCommandBot implements Bot {
 
   private static final Logger LOG = LoggerFactory.getLogger(TelegramBot.class);
 
-  public static final String HACK_BOT_USERNAME_PROPERTY = "telegram.bot.username";
-
   private final CatBot catbot;
   private final TelegramBotsApi api;
   private final int botId;
 
   public TelegramBot(final CatBot catbot, final int botId) {
+    super(catbot.getBotProperty(botId, CatBot.PROP_USERNAME));
     this.catbot = catbot;
     this.botId = botId;
     api = new TelegramBotsApi();
@@ -88,7 +87,7 @@ public class TelegramBot extends TelegramLongPollingCommandBot implements Bot {
             }
 
             retry(Errors.rethrow().wrap(() -> {
-              sendMessage(send);
+              execute(send);
             }));
             break;
           }
@@ -119,17 +118,6 @@ public class TelegramBot extends TelegramLongPollingCommandBot implements Bot {
   @Override
   public void shutdown() {
     LOG.info("Nothing to be done to log out of Telegram.");
-  }
-
-  @Override
-  public String getBotUsername() {
-    // HACK: This is called during the constructor, so we don't have catbot yet.
-    if (null == catbot) {
-      final String username = System.getProperty(HACK_BOT_USERNAME_PROPERTY);
-      System.getProperties().remove(HACK_BOT_USERNAME_PROPERTY);
-      return username;
-    }
-    return catbot.getBotProperty(botId, CatBot.PROP_USERNAME);
   }
 
   @Override
