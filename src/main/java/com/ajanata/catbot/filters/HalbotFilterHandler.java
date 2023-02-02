@@ -40,14 +40,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import twitter4j.Twitter;
-import twitter4j.TwitterException;
-import twitter4j.TwitterFactory;
-import twitter4j.auth.AccessToken;
-
 import com.ajanata.catbot.CatBot;
 import com.ajanata.catbot.halbot.Halbot;
-import com.ajanata.catbot.handlers.GetUserTweetHandler;
 import com.ajanata.catbot.handlers.Handler;
 
 
@@ -73,8 +67,6 @@ public class HalbotFilterHandler implements Filter, Handler {
   private int retainPerChatCount = 0;
   private final Map<String, LinkedList<String>> retainPerChat = Collections
       .synchronizedMap(new HashMap<>());
-  // TODO share instance?
-  private Twitter twitter;
 
   private final Halbot halbot = new Halbot();
   private final Random random = new Random();
@@ -134,16 +126,6 @@ public class HalbotFilterHandler implements Filter, Handler {
         .parseInt(catbot.getFilterProperty(filterId, "freespeech.blacklist")); i++) {
       freespeechBlacklist.add(catbot.getFilterProperty(filterId, "freespeech.blacklist." + i));
     }
-
-    twitter = new TwitterFactory().getInstance();
-
-    final String clientKey = catbot.getProperty(GetUserTweetHandler.PROP_TWITTER_CLIENT_KEY);
-    final String clientSecret = catbot.getProperty(GetUserTweetHandler.PROP_TWITTER_CLIENT_SECRET);
-    twitter.setOAuthConsumer(clientKey, clientSecret);
-
-    final String userToken = catbot.getProperty(GetUserTweetHandler.PROP_TWITTER_USER_TOKEN);
-    final String userSecret = catbot.getProperty(GetUserTweetHandler.PROP_TWITTER_USER_SECRET);
-    twitter.setOAuthAccessToken(new AccessToken(userToken, userSecret));
 
     ready = true;
   }
@@ -270,33 +252,7 @@ public class HalbotFilterHandler implements Filter, Handler {
   }
 
   private String tweetPreviousThought(final String chatId, final String message) {
-    final int index;
-    if (message.trim().isEmpty()) {
-      index = 0;
-    } else {
-      try {
-        index = Integer.parseInt(message) - 1;
-      } catch (final NumberFormatException e) {
-        return "Invalid tweet reference number.";
-      }
-    }
-    String thought = retrieve(chatId, index);
-    if (null == thought) {
-      return "Invalid tweet reference number.";
-    }
-    // avoid tagging people
-    thought = thought.replaceAll("@", "");
-    // TODO remove links?
-    if (thought.length() > TWEET_MAX_LENGTH) {
-      return "Tweet? Twit? Twot? Nope, too long.";
-    }
-    try {
-      twitter.updateStatus(thought);
-      return "Tweeted: " + thought;
-    } catch (final TwitterException e) {
-      LOG.error(String.format("Unable to tweet [%s]", thought), e);
-      return "Unable to tweet: " + e.getMessage();
-    }
+    return "Twitter is fascist.";
   }
 
   // This doesn't work right with multiple commands in the same handler...
